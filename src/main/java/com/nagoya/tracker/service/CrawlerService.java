@@ -7,6 +7,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,7 +20,13 @@ public class CrawlerService {
     private final ProductRepository productRepository;
 
     // Execute Crawling, Save DB
+    @Scheduled(fixedRate = 10000) // Repeat every 10 seconds
     public void scrapeAndSaveData() {
+        // DB Init (Duplication prevention)
+        productRepository.deleteAll();
+
+        System.out.println("Start of periodic data crawling bot operation...");
+
         // In reality, it is retrieved using Jsoup.connect("http://...").get(), but Mock HTML is used for training.
         String mockHtml = """
                 <div id='supermarket-list'>
