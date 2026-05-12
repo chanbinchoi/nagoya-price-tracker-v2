@@ -1,7 +1,8 @@
 package com.nagoya.tracker.controller;
 
-import com.nagoya.tracker.domain.ExchangeRateResponse;
 import com.nagoya.tracker.domain.Product;
+import com.nagoya.tracker.domain.ProductResponse;
+import com.nagoya.tracker.service.ExchangeRateService;
 import com.nagoya.tracker.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,17 +17,32 @@ import java.util.Optional;
 public class ProductController {
 
     private final ProductService productService;
-    private final ExchangeRateResponse exchangeRateResponse;
+    private final ExchangeRateService exchangeRateService;
 
     // HTTP GET Mapping (URL: /api/products/lowest-price)
     @GetMapping("/lowest-price")
-    public String getLowestPrice() {
+    public ProductResponse getLowestPrice() {
         Optional<Product> lowestPriceProduct = productService.getLowestPriceProduct();
+        double jpyToKrw = exchangeRateService.getJpyToKrwRate();
 
-        // 여기부터 다시
+        if (lowestPriceProduct.isPresent()) {
+            Product p = lowestPriceProduct.get();
+            int priceInKrw = (int) (p.getPrice() * jpyToKrw);
 
-        return lowestPriceProduct.map(p ->
-                String.format("最安値の商品情報を確認いたしました。店舗名: %s, 価格: %d円", p.getStoreName(), p.getPrice())
-        ).orElse("誠に恐れ入りますが、リストが空のため、最安値を算出できませんでした。");
+            return new ProductResponse(
+                    true,
+                    p.getStoreName(),
+                    p.getPrice(),
+                    priceInKrw,
+                    jpyToKrw,
+                    "最安値の取得に成功しました。"
+            );
+        } else {
+            // Fail
+            return new ProductResponse(
+                    false, "", 0, 0, 0.0,
+                    "リストが空のため、最安値を算出できませんでした。"
+            );
+        }
     }
 }
