@@ -15,10 +15,10 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    // return lowest price product
     public Optional<Product> getLowestPriceProduct() {
         List<Product> products = productRepository.findAll();
         return products.stream()
-                .min(Comparator.comparingInt(Product::getPrice));
+                .filter(p -> p.getLatestPrice() > 0)
+                .min(Comparator.comparingInt(Product::getLatestPrice));
     }
 }

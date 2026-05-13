@@ -1,5 +1,6 @@
 package com.nagoya.tracker.service;
 
+import com.nagoya.tracker.domain.PriceHistory;
 import com.nagoya.tracker.domain.Product;
 import com.nagoya.tracker.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,8 +11,7 @@ import org.jsoup.select.Elements;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -19,15 +19,10 @@ public class CrawlerService {
 
     private final ProductRepository productRepository;
 
-    // Execute Crawling, Save DB
-    @Scheduled(fixedRate = 10000) // Repeat every 10 seconds
+    @Scheduled(fixedRate = 10000)
     public void scrapeAndSaveData() {
-        // DB Init (Duplication prevention)
-        productRepository.deleteAll();
-
         System.out.println("Start of periodic data crawling bot operation...");
 
-        // In reality, it is retrieved using Jsoup.connect("http://...").get(), but Mock HTML is used for training.
         String mockHtml = """
                 <div id='supermarket-list'>
                     <div class='item'><span class='store'>V-drug</span><span class='name'>banana</span><span class='price'>140</span></div>
@@ -36,27 +31,21 @@ public class CrawlerService {
                 </div>
                 """;
 
-        List<Product> crawledProducts = new ArrayList<>();
-
-        // 1. HTML -> Jsoup Document
         Document doc = Jsoup.parse(mockHtml);
-
-        // 2. Extract All Data - CSS Selector
         Elements items = doc.select("div.item");
 
-        // 3. Extract Data - Loop
         for (Element item : items) {
             String storeName = item.select("span.store").text();
             String itemName = item.select("span.name").text();
             int price = Integer.parseInt(item.select("span.price").text());
 
-            crawledProducts.add(new Product(storeName, itemName, price));
+            Product product = productRepository.findByStoreNameAndItemName(storeName, itemName)
+                    .orElse(new Product(storeName, itemName));
+
+            product.getPriceHistories().add(new PriceHistory(product, price, LocalDateTime.now()));
+            productRepository.save(product);
         }
 
-        // 4. Save All Data to DB (Spring Data JPA)
-        productRepository.saveAll(crawledProducts);
-        System.out.println("Crawled data loaded into DB completed: " + crawledProducts.size() + "cases");
-
-
+        System.out.println("Crawling completed: " + items.size() + " items recorded.");
     }
 }

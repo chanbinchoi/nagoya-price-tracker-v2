@@ -27,12 +27,12 @@ public class ProductController {
 
         if (lowestPriceProduct.isPresent()) {
             Product p = lowestPriceProduct.get();
-            int priceInKrw = (int) (p.getPrice() * jpyToKrw);
+            int priceInKrw = (int) (p.getLatestPrice() * jpyToKrw);
 
             return new ProductResponse(
                     true,
                     p.getStoreName(),
-                    p.getPrice(),
+                    p.getLatestPrice(),
                     priceInKrw,
                     jpyToKrw,
                     "最安値の取得に成功しました。"
