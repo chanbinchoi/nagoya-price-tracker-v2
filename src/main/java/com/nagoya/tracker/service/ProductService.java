@@ -16,7 +16,7 @@ public class ProductService {
     private final ProductRepository productRepository;
 
     public Optional<Product> getLowestPriceProduct() {
-        List<Product> products = productRepository.findAll();
+        List<Product> products = productRepository.findAllWithPriceHistories();
         return products.stream()
                 .filter(p -> p.getLatestPrice() > 0)
                 .min(Comparator.comparingInt(Product::getLatestPrice));
