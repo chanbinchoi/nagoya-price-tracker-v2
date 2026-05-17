@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-@Component
+// @Component
 public class AeonScraper implements MarketScraper {
 
     private static final String URL =
@@ -32,7 +32,7 @@ public class AeonScraper implements MarketScraper {
         WebDriverManager.chromedriver().setup();
 
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless");
+        // options.addArguments("--headless"); // disabled for visual debugging
         options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
@@ -40,6 +40,12 @@ public class AeonScraper implements MarketScraper {
         WebDriver driver = new ChromeDriver(options);
         try {
             driver.get(URL);
+
+            try {
+                Thread.sleep(15000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
 
             new WebDriverWait(driver, Duration.ofSeconds(10))
                     .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("li.product-item")));
